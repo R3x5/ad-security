@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Active Directory Security Semantics</title>
+<style>
+    :root {
+      --bg: #0d1117;
+      --panel: #111827;
+      --panel-2: #161b22;
+      --panel-3: #0f172a;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --line: #273244;
+      --line-soft: #1f2937;
+      --accent: #7dd3fc;
+      --accent-2: #a78bfa;
+      --code-bg: #0b1220;
+      --quote: #22c55e;
+      --shadow: 0 10px 30px rgba(0,0,0,.28);
+      --maxw: 1260px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(125,211,252,.08), transparent 28%),
+        radial-gradient(circle at top right, rgba(167,139,250,.08), transparent 24%),
+        linear-gradient(180deg, #0b0f16, var(--bg));
+      color: var(--text);
+      font: 16px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .shell {
+      max-width: var(--maxw);
+      margin: 0 auto;
+      padding: 32px 24px 72px;
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr);
+      gap: 28px;
+    }
+
+    .toc {
+      position: sticky;
+      top: 20px;
+      align-self: start;
+      background: linear-gradient(180deg, rgba(17,24,39,.94), rgba(13,17,23,.94));
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px 18px 14px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+
+    .toc h2 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .toc .title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      color: #f8fafc;
+    }
+
+    .tree, .tree ul {
+      list-style: none;
+      margin: 0;
+      padding-left: 0;
+    }
+
+    .tree > li + li { margin-top: 8px; }
+    .tree ul {
+      margin-top: 8px;
+      margin-left: 14px;
+      padding-left: 14px;
+      border-left: 1px dashed #334155;
+    }
+    .tree li { color: var(--muted); }
+    .tree a {
+      display: inline-block;
+      padding: 2px 0;
+      color: var(--text);
+    }
+    .tree a.small { font-size: 14px; color: #cbd5e1; }
+
+    .main {
+      min-width: 0;
+    }
+
+    .hero, .card {
+      background: linear-gradient(180deg, rgba(17,24,39,.92), rgba(13,17,23,.92));
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      padding: 30px 32px 26px;
+      margin-bottom: 22px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(28px, 4vw, 40px);
+      line-height: 1.15;
+      color: #f8fafc;
+      letter-spacing: -.02em;
+    }
+
+    .hero p {
+      margin: 10px 0 0;
+      color: #cbd5e1;
+      max-width: 78ch;
+    }
+
+    .hero .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .pill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(125,211,252,.08);
+      color: #dbeafe;
+      border: 1px solid rgba(125,211,252,.16);
+      font-size: 13px;
+    }
+
+    .card {
+      padding: 34px 36px;
+    }
+
+    .notice {
+      margin: 0 0 26px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(167,139,250,.08);
+      border: 1px solid rgba(167,139,250,.18);
+      color: #ddd6fe;
+    }
+
+    h2, h3, h4 {
+      color: #f8fafc;
+      letter-spacing: -.01em;
+      scroll-margin-top: 18px;
+    }
+    h2 {
+      margin: 44px 0 18px;
+      font-size: 30px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    h3 {
+      margin: 34px 0 14px;
+      font-size: 23px;
+    }
+    h4 {
+      margin: 26px 0 12px;
+      font-size: 18px;
+    }
+
+    p { margin: 14px 0; }
+    strong { color: #f8fafc; }
+    em { color: #d1d5db; }
+
+    hr {
+      border: 0;
+      border-top: 1px solid var(--line-soft);
+      margin: 30px 0;
+    }
+
+    code.inline {
+      font-family: "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+      background: rgba(148,163,184,.12);
+      color: #c4b5fd;
+      padding: .18em .42em;
+      border-radius: 7px;
+      border: 1px solid rgba(148,163,184,.16);
+      font-size: .93em;
+    }
+
+    pre {
+      margin: 16px 0 18px;
+      background:
+        linear-gradient(180deg, rgba(17,24,39,.98), rgba(11,18,32,.98));
+      border: 1px solid #223047;
+      border-radius: 16px;
+      padding: 18px 18px 18px;
+      overflow: auto;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+      position: relative;
+    }
+
+    pre::before {
+      content: attr(data-lang);
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      font-size: 12px;
+      color: #94a3b8;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    pre code {
+      display: block;
+      white-space: pre;
+      color: #dbeafe;
+      font-family: "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+      font-size: 14px;
+      line-height: 1.65;
+      tab-size: 4;
+    }
+
+    blockquote {
+      margin: 16px 0 18px;
+      padding: 14px 18px;
+      border-left: 4px solid var(--quote);
+      background: rgba(34,197,94,.08);
+      color: #dcfce7;
+      border-radius: 0 14px 14px 0;
+    }
+
+    ul.clean {
+      padding-left: 22px;
+    }
+    ul.clean li { margin: 8px 0; }
+
+    .subtle {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .footer {
+      margin-top: 36px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line-soft);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+
+
+    .diagram {
+      margin: 18px 0 22px;
+      padding: 18px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(15,23,42,.9), rgba(17,24,39,.9));
+    }
+    .diagram .row {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+    .diagram .box {
+      min-height: 82px;
+      border-radius: 14px;
+      border: 1px solid rgba(125,211,252,.18);
+      background: rgba(125,211,252,.06);
+      padding: 14px;
+    }
+    .diagram .box strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+    .diagram .arrow {
+      color: var(--accent);
+      font-size: 22px;
+      opacity: .9;
+    }
+    .diagram .caption {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    @media (max-width: 980px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+      .toc {
+        position: static;
+      }
+      .diagram .row {
+        grid-template-columns: 1fr;
+      }
+      .diagram .arrow {
+        justify-self: center;
+        transform: rotate(90deg);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .shell { padding: 18px 14px 42px; gap: 18px; }
+      .hero, .card { padding: 22px 18px; border-radius: 18px; }
+      h2 { font-size: 26px; }
+      h3 { font-size: 21px; }
+      pre { padding: 16px 14px; }
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+<aside class="toc">
+<h2>目录</h2>
+<h2 class="title" style="text-align: center;">Active Directory Security Semantics</h2>
+<ul class="tree">
+<li>
+<a href="#asreproasting">🔥 AS-REP Roasting</a>
+<ul>
+<li><a class="small" href="#asreproasting-summary">🧭 语义总结</a></li>
+</ul>
+</li>
+<li>
+<a href="#asktgt">🪪 AS 阶段（asktgt）</a>
+<ul>
+<li><a class="small" href="#asktgt-normal">✅ 正常场景</a></li>
+<li><a class="small" href="#asktgt-abnormal">⚠️ 非正常场景</a></li>
+<li><a class="small" href="#asktgt-conclusion">🧩 小结</a></li>
+</ul>
+</li>
+<li>
+<a href="#asktgs">🧾 TGS 阶段（asktgs）</a>
+<ul>
+<li><a class="small" href="#tgs-req">📨 TGS-REQ</a></li>
+<li><a class="small" href="#send-to-kdc">🏛️ KDC 处理请求</a></li>
+<li><a class="small" href="#build-service-ticket">🧱 构造服务票据</a></li>
+<li><a class="small" href="#service-ticket">🎟️ 服务票据</a></li>
+<li><a class="small" href="#tgs-rep">📦 TGS-REP</a></li>
+<li><a class="small" href="#end-of-asktgs">✅ asktgs 的结束状态</a></li>
+<li><a class="small" href="#asktgs-vs-asktgt">⚖️ asktgs 与 asktgt</a></li>
+</ul>
+</li>
+<li>
+<a href="#tickets">🎫 票据（Tickets）</a>
+<ul>
+<li><a class="small" href="#golden-ticket">🥇 黄金票据（Golden Ticket）</a></li>
+<li><a class="small" href="#silver-ticket">🥈 白银票据（Silver Ticket）</a></li>
+<li><a class="small" href="#pac">📜 PAC</a></li>
+</ul>
+</li>
+<li>
+<a href="#delegation">🔗 委派（Delegation）</a>
+<ul>
+<li><a class="small" href="#delegation-why">❓ 为什么需要委派</a></li>
+<li><a class="small" href="#unconstrained-delegation">🪤 非约束委派</a></li>
+<li><a class="small" href="#kcd">🔒 Kerberos 约束委派（KCD）</a></li>
+<li><a class="small" href="#rbcd">🧩 基于资源的约束委派（RBCD）</a></li>
+<li><a class="small" href="#kcd-without-with-pt">🧪 无 / 有 PT 的差异</a></li>
+<li><a class="small" href="#delegation-faq">❓ FAQ</a></li>
+</ul>
+</li>
+</ul>
+</aside>
+<main class="main">
+<section class="hero">
+<h1 style="text-align: center;">Active Directory Security Semantics</h1>
+<p></p>
+<!-- <div class="meta">
+<span class="pill"></span>
+<span class="pill"></span>
+<span class="pill"></span>
+</div> -->
+</section>
+<article class="card">
+<h2 id="asreproasting">🔥 AS-REP Roasting</h2>
+<p>
+  先把它放回最普通的认证语义里看，会更容易理解。一个标准认证过程，通常至少包含下面四步：
+</p>
+<ul class="clean">
+<li>你先向系统声明：<strong>“我是 Alice。”</strong></li>
+<li>系统要求你给出某种<strong>可验证的证明</strong>，以表明你确实是 Alice。</li>
+<li>你随后执行一段密码学动作，例如用口令派生出的长期密钥完成加密或解密。</li>
+<li>系统在验证成功后，才把属于 Alice 的初始凭据发给你。</li>
+</ul>
+<p>
+  如果你拿不出正确的口令，这个过程就会停在“证明身份”那一步；系统不会继续向前，也不会把任何和 Alice 绑定的敏感凭据交给你。
+</p>
+<pre data-lang="C"><code>AS_REQ req;
+
+req.pvno      = 5;
+req.msg_type  = AS_REQ;
+req.cname     = "victim_user";
+req.realm     = "DOMAIN.LOCAL";
+req.sname     = "krbtgt/DOMAIN.LOCAL";
+
+req.pa_data = [];   /* empty PA-DATA list */
+
+/* req-body */
+kdc-options = FORWARDABLE | RENEWABLE | ...;
+nonce       = random();
+till        = timestamp;
+etype[]     = [aes256 / aes128 / rc4 ...];
+
+send_to_kdc(req);</code></pre>
+<p>
+  但当账户关闭了 <code class="inline">Pre-Authentication</code> 时，边界就被放松了。此时的语义更像是：
+  你只说了“我是 Alice”，而系统因为策略配置的缘故，<strong>没有先要求你证明自己真的持有 Alice 的长期密钥</strong>，
+  就把一份属于 Alice 的 AS-REP 直接发了出来。
+</p>
+<p>
+  这份 AS-REP 并不是明文泄露口令；它仍然是严格按 Kerberos 规则构造出来的密码学对象。
+  问题在于：<strong>KDC 在线上尚未完成身份建立，就把可离线暴力破解的材料交给了请求方。</strong>
+</p>
+<pre data-lang="C"><code>/* Identity declaration only: no proof of key possession yet */
+user = lookup_user(req.cname);
+
+if (user.requires_preauth) {
+    pa_ts = find(req.pa_data, PA_ENC_TIMESTAMP);
+    if (!pa_ts) {
+        return PREAUTH_REQUIRED;
+    }
+
+    if (!verify_pa_enc_timestamp(req.pa_data, user.key)) {
+        return PREAUTH_FAILED;
+    }
+
+    plaintext_ts = Decrypt(
+        key    = user.long_term_key,
+        cipher = pa_ts.value
+    );
+
+    if (!plaintext_ts.valid || !within_clock_skew(plaintext_ts)) {
+        reject;
+    }
+}
+
+/* Credential issuance becomes reachable */
+return AS_REP;</code></pre>
+<pre data-lang="C"><code>if (user.requires_preauth == false) {
+    /* no proof of possession is required before issuing AS-REP */
+    return AS_REP;
+}</code></pre>
+<p>
+  返回的 <code class="inline">AS-REP</code> 里，最有价值的离线破解目标并不是 TGT 本身，而是
+  <code class="inline">enc_part</code> —— 即那段用用户长期密钥加密的 <code class="inline">EncASRepPart</code>。
+</p>
+<pre data-lang="C"><code>EncASRepPart enc_part_plain;
+
+enc_part_plain.session_key = random_key();
+enc_part_plain.authtime    = now();
+enc_part_plain.starttime   = now();
+enc_part_plain.endtime     = now() + TGT_LIFETIME;
+enc_part_plain.flags       = DEFAULT_FLAGS;
+enc_part_plain.sname       = krbtgt/REALM;
+
+Key user_long_term_key = user.stored_kerberos_key;
+
+EncryptedData enc_part;
+enc_part.etype  = user.etype;
+enc_part.cipher = Encrypt(
+    key  = user_long_term_key,
+    data = enc_part_plain
+);
+
+Ticket tgt = Encrypt(
+    key  = krbtgt_key,
+    data = Ticket {
+        session_key,
+        user,
+        realm,
+        flags,
+        times
+    }
+);
+
+AS_REP as_rep;
+as_rep.ticket   = tgt;
+as_rep.enc_part = enc_part;
+
+send_to_client(as_rep);
+return AS_REP;</code></pre>
+<pre data-lang="C"><code>AS_REP rep = recv_from_kdc();
+
+/* ticket? I don't care */
+EncryptedData roast_me = rep.enc_part;</code></pre>
+<h3 id="asreproasting-summary">🧭 语义总结</h3>
+<p>
+  从安全模型上看，<strong>AS-REP Roasting 不是 Kerberos 密码学本身被攻破</strong>。
+  它利用的是：在 AS 阶段，KDC 因为账户策略禁用了预认证，从而允许“<strong>先发凭据，再让你离线证明自己</strong>”这一异常路径成立。
+</p>
+<p>
+  换句话说，真正被放松的不是加密强度，而是<strong>认证边界</strong>。KDC 并没有把 Alice 的口令直接给你；
+  它只是把本来应该在<strong>身份建立之后</strong>才发出的那份材料，提前发给了任何能够声明“我是 Alice”的请求者。
+</p>
+<h2 id="asktgt">🪪 AS 阶段（asktgt）</h2>
+<p>
+<code class="inline">asktgt</code> 所代表的，其实就是从客户端视角执行一遍<strong>标准的 Kerberos Authentication Service 交换</strong>。
+  它不是在“绕过认证”，恰恰相反，它严格满足了协议本来想要的那条要求：
+  <strong>客户端必须先向 KDC 证明自己确实持有用户长期密钥，KDC 才会签发初始凭据。</strong>
+</p>
+<p>
+  从报文形态上看，<code class="inline">asktgt</code> 和前面的 <a href="#asreproasting">AS-REP Roasting</a> 很像，
+  同样都是一份 <code class="inline">AS-REQ</code>；最关键的区别在于，这里主动提供了
+  <code class="inline">PA_DATA</code>，尤其是 <code class="inline">PA-ENC-TIMESTAMP</code>。
+</p>
+<pre data-lang="C"><code>AS_REQ req;
+
+req.pvno     = 5;
+req.msg_type = AS_REQ;
+req.cname    = "victim_user";
+req.realm    = "DOMAIN.LOCAL";
+req.sname    = "krbtgt/DOMAIN.LOCAL";
+
+/* provide pre-auth */
+req.pa_data = [
+    type = PA_ENC_TIMESTAMP {
+        value = Encrypt(
+            key       = user_long_term_key,
+            plaintext = current_timestamp
+        )
+    },
+    PA_PAC_REQUEST { include_pac = true }
+];
+
+/* req-body */
+kdc-options = FORWARDABLE | RENEWABLE | ...;
+nonce       = random();
+till        = timestamp;
+etype[]     = [aes256 / aes128 / rc4 ...];
+
+send_to_kdc(req);</code></pre>
+<p>
+  KDC 收到这份 <code class="inline">AS-REQ</code> 后，首先会判断该账户是否要求预认证：
+</p>
+<pre data-lang="C"><code>user = lookup_account(req.cname, req.realm);
+
+if (!user.exists) {
+    reject;
+}
+
+if (user.requires_preauth) {
+    goto normal_case;
+} else {
+    goto abnormal_case;
+}</code></pre>
+<h3 id="asktgt-normal">✅ 正常场景</h3>
+<p>
+  在正常场景下，账户启用了预认证。KDC 会检查 <code class="inline">PA_DATA</code> 中是否存在
+  <code class="inline">PA-ENC-TIMESTAMP</code>，并使用域中存储的该用户长期密钥尝试解密它。
+  只有当解密成功、时间戳格式正确、且新鲜度满足时钟偏移要求时，KDC 才会认定：
+  <strong>当前请求方确实持有该用户的长期密钥</strong>。
+</p>
+<pre data-lang="C"><code>if (user.requires_preauth == true) {
+    pa_ts = find(req.pa_data, PA_ENC_TIMESTAMP);
+    if (!pa_ts) {
+        reject;
+    }
+
+    if (!verify_pa_enc_timestamp(req.pa_data, user.key)) {
+        return PREAUTH_FAILED;
+    }
+
+    plaintext_ts = Decrypt(
+        key    = user.long_term_key,
+        cipher = pa_ts.value
+    );
+
+    if (!plaintext_ts.valid || !within_clock_skew(plaintext_ts)) {
+        reject;
+    }
+
+    /* identity establishment is now complete */
+    return AS_REP;
+}</code></pre>
+<p>
+  这一步非常关键：<strong>AS-REP 的生成发生在身份建立之后</strong>。
+  这与 <a href="#asreproasting">AS-REP Roasting</a> 中“尚未建立身份就先拿到 AS-REP”的异常路径，语义上完全不同。
+</p>
+<h3 id="asktgt-abnormal">⚠️ 非正常场景</h3>
+<p>
+  若账户本身就不要求预认证，那么即便客户端主动带上了 <code class="inline">PA_DATA</code>，
+  KDC 也可能根本不把它当作前置门槛，而是直接返回 <code class="inline">AS-REP</code>：
+</p>
+<pre data-lang="C"><code>if (user.requires_preauth == false) {
+    /* it does not require proof of possession before issuing AS-REP */
+    return AS_REP;
+}</code></pre>
+<p>
+  这里需要把语义掰正：这并不表示 KDC 在“正常认证后”再把结果返给你；恰恰相反，
+  它表示<strong>在线的身份建立步骤被跳过了</strong>。客户端之后当然仍然需要真正持有用户长期密钥，
+  才能解开 <code class="inline">enc_part</code>、拿到会话密钥并使用 TGT；但这已经变成了
+  <strong>客户端本地的离线解密门槛</strong>，而不是 KDC 在线上发证前执行的身份验证。
+</p>
+<pre data-lang="C"><code>EncASRepPart enc_part_plain;
+
+enc_part_plain.session_key = random_key();
+enc_part_plain.authtime    = now();
+enc_part_plain.starttime   = now();
+enc_part_plain.endtime     = now() + TGT_LIFETIME;
+enc_part_plain.flags       = DEFAULT_FLAGS;
+enc_part_plain.sname       = krbtgt/REALM;
+
+Key user_long_term_key = user.stored_kerberos_key;
+
+EncryptedData enc_part;
+enc_part.etype  = user.etype;
+enc_part.cipher = Encrypt(
+    key  = user_long_term_key,
+    data = enc_part_plain
+);
+
+Ticket tgt = Encrypt(
+    key  = krbtgt_key,
+    data = Ticket {
+        session_key,
+        user,
+        realm,
+        flags,
+        times
+    }
+);
+
+AS_REP as_rep;
+as_rep.ticket   = tgt;
+as_rep.enc_part = enc_part;
+
+send_to_client(as_rep);
+return AS_REP;</code></pre>
+<p>
+  客户端随后完成自己的最后一步：解开 <code class="inline">enc_part</code>，取出会话密钥，并持有 KDC 签发的 TGT。
+</p>
+<pre data-lang="C"><code>AS_REP rep = recv_from_kdc();
+
+plaintext = Decrypt(
+    key    = user_long_term_key,
+    cipher = rep.enc_part
+);
+
+if (!plaintext.valid) {
+    authentication_failed;
+}
+
+TGT = rep.ticket;</code></pre>
+<h3 id="asktgt-conclusion">🧩 小结</h3>
+<p>
+  所以，<code class="inline">asktgt</code> 的本质就是：客户端在 <code class="inline">AS-REQ</code> 中放入
+  一个由用户长期密钥加密的 <code class="inline">PA-ENC-TIMESTAMP</code>，KDC 用域中存储的同一把长期密钥去验证它。
+</p>
+<p>
+  一旦验证成功，KDC 便可得出“请求方确实控制着该主体的长期密钥”这一结论，随后生成并返回包含 TGT 的 <code class="inline">AS-REP</code>。
+  因而在正常场景下，<code class="inline">asktgt</code> 不是绕过 Kerberos 认证，而是 Kerberos 认证语义本身的标准执行。
+</p>
+<h2 id="asktgs">🧾 TGS 阶段（asktgs）</h2>
+<p>
+          在 <code class="inline">asktgs</code> 阶段，流程的关注点已经不再是<strong>认证</strong>，
+          而是<strong>授权</strong>加上<strong>凭据派生</strong>。进入 TGS 阶段时，一个关键前提已经成立：
+          <strong>身份建立（identity establishment）已在 AS 阶段完成</strong>。这意味着，就协议语义而言，
+          <code class="inline">asktgs</code> 直接信任 AS 阶段已经得出的身份结论。
+        </p>
+<p>
+          更准确地说，TGS 阶段关注的是：如何维持一个<strong>已获授权身份</strong>的连续性。
+          它的首要安全目标不是重新判断“你是谁”，而是确保后续任何授权决策所依赖的身份，
+          自认证完成以来其控制权从未中断。
+        </p>
+<blockquote>
+          Kerberos 的基本认证过程可以概括为：客户端先向认证服务器（AS）请求某个服务器的“凭据”；
+          AS 返回的内容以客户端密钥加密，其中包含面向目标服务器的票据，以及一个临时加密密钥（通常称为会话密钥）。
+          客户端随后把该票据发送给服务器；票据中包含客户端身份以及一份会话密钥拷贝，二者都以服务器密钥加密。
+          这把由客户端与服务器共享的会话密钥可用于认证客户端，也可选地用于认证服务器，
+          还可用于保护后续通信，或协商一个独立的子会话密钥。需要注意的是，很多应用只在连接建立之初使用 Kerberos；
+          若应用未对后续数据流做加密或完整性保护，那么身份验证只覆盖连接初始化这一刻，
+          并不能保证之后每一条消息都来自同一个主体。<br/>
+<span class="subtle">引用自<a href="https://datatracker.ietf.org/doc/html/rfc4120#section-1.1"> RFC 4120 section-1.1</a></span>
+</blockquote>
+<p>与 AS 阶段不同，客户端在构造 TGS-REQ 时必须提供以下内容：</p>
+<ul class="clean">
+<li>一张能被 KDC 识别并接受的 <strong>TGT</strong>。</li>
+<li>一个 <strong>Authenticator</strong>，用于立即证明客户端仍然控制着此前建立起来的身份。</li>
+<li>一个明确的授权目标，也就是特定的 <strong>SPN</strong>。</li>
+</ul>
+<p><strong>这三项缺一不可。从语义上看，客户端实际上在声明：</strong></p>
+<pre data-lang="TEXT"><code>1. 我持有一张由 KDC 签发的有效 TGT
+2. 我当前仍控制着与该 TGT 绑定的会话密钥
+3. 我请求在该 TGT 所编码约束之下访问服务 X</code></pre>
+<p>
+          这些并不是空口声明。KDC 必须分别使用已经绑定到该身份上的密码学材料，
+          对这三项断言进行<strong>独立验证</strong>。任意一项验证失败，请求都会被立即拒绝。
+        </p>
+<blockquote>
+          为了方便说明，下面先给出一份完整的 TGS 处理骨架；后续分析只聚焦其中真正与安全相关的检查点。
+        </blockquote>
+<h3 id="tgs-req">📨 TGS-REQ</h3>
+<pre data-lang="C"><code>TGS_REQ req;
+
+req.pvno     = 5;
+req.msg_type = TGS_REQ;
+req.realm    = "DOMAIN.LOCAL";
+req.sname    = "HTTP/websrv.DOMAIN.LOCAL";
+...            /* omitted */
+
+/* provided ticket */
+req.ticket = TGT;
+
+/* authenticator */
+req.authenticator = Encrypt(
+    key = tgt_session_key,
+    plaintext = {
+        cname      = user.name,
+        realm      = user.realm,
+        timestamp  = now(),
+        subkey     = optional,
+        seq_number = optional
+    }
+);
+
+/* req-body */
+kdc-options = FORWARDABLE | RENEWABLE | ...;
+nonce       = random();
+etype[]     = [aes256 / aes128 / rc4 ...];
+...          /* omitted */
+
+send_to_kdc(req);</code></pre>
+<p>
+          从语义上看，这段代码等价于一句话：
+          <strong>“我正在申请访问服务 X，并且我现在仍然持有你我之间共享的那把 TGT 会话密钥。”</strong>
+</p>
+<h3 id="send-to-kdc">🏛️ KDC 处理请求</h3>
+<p>KDC 收到 TGS-REQ 后，核心处理逻辑可以概括为以下几步。</p>
+<p>
+          第一步，KDC 并不是在验证用户密码，而是在验证：当前提交上来的这张 TGT，
+          是否确实是<strong>由自己签发</strong>的。
+        </p>
+<pre data-lang="C"><code>tgt_plain = Decrypt(
+    key    = krbtgt_key,
+    cipher = req.ticket
+);
+
+/* 
+    This step does not verify the client's identity. Instead, it verifies the
+    provenance of the ticket itself, confirming that the TGT was issued by this
+    KDC and has not been tampered with.
+*/
+
+if (!tgt_plain.valid) {
+    reject;
+}</code></pre>
+<p>
+          这一步验证的不是“请求者是谁”，而是<strong>票据来源本身</strong>：
+          它确认该 TGT 的出处属于本 KDC，且内容未被篡改。
+        </p>
+<p>
+          第二步，KDC 通过解密并检查 Authenticator，确认请求方确实仍然持有与这张 TGT 绑定的会话密钥。
+          换句话说，它验证的是<strong>身份控制权的连续性</strong>，并借由时间戳与重放检查来防止重放攻击。
+        </p>
+<blockquote>
+          为了验证一次事务中各方主体的身份，客户端会把票据发送给应用服务器。由于票据本身是明文传输的
+          （其中有些部分虽然被加密，但那种加密本身并不能阻止重放），攻击者可能截获并复用它，
+          因而还需要额外发送一段信息来证明这条消息确实出自票据原本签发给的那个主体。
+          这段信息就是 Authenticator。它使用会话密钥加密，并包含时间戳。
+          时间戳用于证明消息是最近生成的，而非重放；用会话密钥加密则证明它出自真正掌握该会话密钥的一方。
+          因为除请求主体与服务器外，没有人知道这把会话密钥，所以这就保证了客户端身份。<br/>
+<span class="subtle">引用自<a href="https://datatracker.ietf.org/doc/html/rfc4120#section-1.1"> RFC 4120 section-1.1</a></span>
+</blockquote>
+<pre data-lang="C"><code>auth_plain = Decrypt(
+    key    = tgt_plain.session_key,
+    cipher = req.authenticator
+);
+
+/* 
+    By successfully decrypting and validating the authenticator using the TGT
+    session key, the KDC confirms continuous control over the session key. This
+    establishes temporal continuity of the previously authenticated identity
+    rather than re-authentication.
+*/
+
+if (!auth_plain.valid) {
+    reject;
+}
+
+if (!within_clock_skew(auth_plain.timestamp)) {
+    reject;
+}
+
+if (is_replay(auth_plain)) {
+    reject;
+}</code></pre>
+<p>
+          到这里，KDC 其实并没有“重新学到”任何新的身份信息。它只是确认了一个不变量：
+          <strong>当前发起请求的实体，仍然控制着 AS 阶段绑定给已认证身份的那份密码学材料。</strong>
+          后续所有授权决策都建立在这个不变量仍然成立的前提之上。
+        </p>
+<p>
+          接下来就是 <code class="inline">asktgs</code> 与 <code class="inline">asktgt</code>
+          在语义上的根本分叉：AS 阶段回答的是<strong>“你是谁？”</strong>，而 TGS 阶段回答的是
+          <strong>“在当前约束下，你能拿到这个服务的能力吗？”</strong>
+</p>
+<pre data-lang="C"><code>service = lookup_service(req.sname, req.realm);
+
+if (!service.exists) {
+    reject;
+}
+
+if (!policy_allows(
+        client  = tgt_plain.cname,
+        service = service,
+        flags   = tgt_plain.flags,
+        options = req.kdc-options
+    )) {
+    reject;
+}</code></pre>
+<h3 id="build-service-ticket">🧱 构造服务票据</h3>
+<p>
+          当所有验证和策略检查都通过后，KDC 才会开始进行真正的凭据签发（credential issuance）。
+        </p>
+<pre data-lang="C"><code>/* generate service session key */
+Key service_session_key = random_key();
+
+/* construct EncTGSRepPart */
+EncTGSRepPart enc_part_plain;
+
+enc_part_plain.session_key = service_session_key;
+enc_part_plain.client      = tgt_plain.cname;
+enc_part_plain.flags       = derived_flags;
+enc_part_plain.authtime    = tgt_plain.authtime;
+enc_part_plain.starttime   = now();
+enc_part_plain.endtime     = now() + SERVICE_TICKET_LIFETIME;
+enc_part_plain.sname       = service.name;
+
+/* encrypt enc-part for client */
+EncryptedData enc_part;
+
+enc_part.etype  = tgt_plain.session_key.etype;
+enc_part.cipher = Encrypt(
+    key  = tgt_plain.session_key,
+    data = enc_part_plain
+);</code></pre>
+<p>
+          这里生成的是一把新的 <strong>service session key</strong>，它只服务于当前目标服务。
+          这把密钥随后会同时出现在两个地方：
+          一处是发给客户端、由 TGT 会话密钥加密的 <code class="inline">enc_part</code>，
+          另一处是发给目标服务、由服务长期密钥加密的服务票据中。
+        </p>
+<h3 id="service-ticket">🎟️ 服务票据</h3>
+<p>
+          这正是 Kerberos 采用<strong>能力（capability）式设计</strong>的关键点：
+          客户端并不能读取票据内部内容，它只能把票据转交给目标服务；而目标服务通过解密该票据来确认授权。
+        </p>
+<p>
+          因而，服务票据本身就是一种受限能力。对客户端来说，它不是一份需要被“理解”的结构，
+          而是一份由 KDC 生成、只能被目标服务解释的安全载体。
+        </p>
+<div class="diagram">
+<div class="row">
+<div class="box">
+<strong>客户端</strong>
+              持有一张不可读的服务票据，并拿到对应的 service session key。
+            </div>
+<div class="arrow">→</div>
+<div class="box">
+<strong>KDC</strong>
+              用目标服务的长期密钥加密票据，把客户端身份与服务会话密钥封装进去。
+            </div>
+<div class="arrow">→</div>
+<div class="box">
+<strong>目标服务</strong>
+              解密票据，确认它所承载的是一份由 KDC 显式签发的访问能力。
+            </div>
+</div>
+<div class="caption">服务票据由客户端“携带”，但只有目标服务能够解释其内容。</div>
+</div>
+<pre data-lang="C"><code>Ticket service_ticket = Encrypt(
+    key  = service.long_term_key,
+    data = {
+        session_key = service_session_key,
+        client      = tgt_plain.cname,
+        realm       = tgt_plain.realm,
+        flags,
+        times
+    }
+);</code></pre>
+<h3 id="tgs-rep">📦 TGS-REP</h3>
+<pre data-lang="C"><code>TGS_REP rep;
+
+rep.ticket   = service_ticket;
+rep.enc_part = enc_part;
+
+send_to_client(rep);</code></pre>
+<h3 id="end-of-asktgs">✅ asktgs 的结束状态</h3>
+<p>
+          到这里，客户端获得的是一份<strong>由 KDC 明确授权、且严格绑定到某个指定服务上的访问能力</strong>。
+        </p>
+<pre data-lang="C"><code>TGS_REP rep = recv_from_kdc();
+
+enc_part_plain = Decrypt(
+    key    = tgt_session_key,
+    cipher = rep.enc_part
+);
+
+if (!enc_part_plain.valid) {
+    authentication_failed;
+}
+
+/* 
+   client now holds:
+   - service_ticket (opaque)
+   - service_session_key
+*/</code></pre>
+<p>
+<code class="inline">asktgs</code> 并不会重新建立身份。它是在一个身份已经成立的基础上，
+          通过验证“请求方此刻仍然持有那把会话密钥”来阻断凭据转移，并在策略约束下生成一份
+          <strong>绑定到具体服务的访问能力</strong>。
+        </p>
+<p>
+          因此，TGS 阶段的安全性并不依赖用户长期密钥，而是依赖于对短生命周期会话密钥的持续控制。
+          这也正是最小暴露（least exposure）与最小信任传播（minimal trust propagation）得以成立的基础。
+        </p>
+<h3 id="asktgs-vs-asktgt">⚖️ asktgs 与 asktgt 的区别</h3>
+<p><strong>下面把 <code class="inline">asktgs</code> 与 <code class="inline">asktgt</code> 的核心差异再收束一下。</strong></p>
+<p>
+          在 TGS-REQ 阶段，客户端不再提供 <code class="inline">PA_DATA</code>，
+          因为身份建立已经在 AS 阶段完成。它提交的是一张由 KDC 签发的 TGT，
+          再加上一个用 TGT 会话密钥加密的 Authenticator，以此证明自己现在仍然控制着
+          那次身份建立过程中派生出来的会话密钥。
+        </p>
+<p>
+          KDC 必须同时完成两次成功解密：先用 <code class="inline">krbtgt</code> 密钥解出 TGT，
+          再用 TGT 会话密钥解出 Authenticator。只有当这两个条件都满足时，
+          KDC 才会继续进入授权评估，并进一步派生出面向目标服务的服务票据。
+        </p>
+<p>
+          所以，<code class="inline">asktgs</code> 并不重新建立身份；它假定身份连续成立，
+          然后通过验证会话密钥控制权未曾中断，来执行授权。在 TGT 所编码的约束与域策略的共同作用下，
+          KDC 最终派生出一份服务绑定的访问能力，从而限制信任扩散，并避免同一凭据跨服务被随意复用。
+        </p>
+<p>
+          总结来说，TGS 阶段的安全基础不再是用户的长期秘密，而是对一把短时效会话密钥的持续占有。
+          它在维持密码学连续性的同时，也尽可能贴近最小权限原则。
+        </p>
+<div class="footer">
+          
+        </div>
+<h2 id="tickets">🎫 票据（Tickets）</h2>
+<h3 id="golden-ticket">🥇 黄金票据（Golden Ticket）</h3>
+<p>
+          一旦攻击者获取了某个域的 <code class="inline">krbtgt</code> 密钥，就能够为该域伪造
+          <strong>Golden Ticket</strong>。其底层原理是：攻击者直接伪造 <em>AS 阶段</em> 的结果，
+          也就是 <strong>AS-REP</strong>，而无需真正发送 AS-REQ，也无需与 KDC 交互。
+          （参见
+          <a href="#asktgt">AS phase</a>）
+        </p>
+<pre data-lang="C"><code>// attacker controls krbtgt_A
+
+tgt_session_key = random_key();
+
+fake_TGT_A = Encrypt(
+    key = krbtgt_A,
+    data = {
+        sname = "krbtgt/A",
+        client = "Administrator@A",
+        session_key = tgt_session_key,
+        PAC = {
+            UserSID = A\DomainSID + RID(500)
+        },
+        times,
+        flags
+    }
+);</code></pre>
+<p>
+          在跨域（cross-realm）场景中，Golden Ticket 与 Silver Ticket 的语义都会发生重要变化，
+          其中最关键的一点，是加密与信任锚点从 <code class="inline">krbtgt</code> 密钥转移为
+          <strong>域间信任密钥（inter-realm trust key）</strong>。
+        </p>
+<p>
+          当<strong>受信任域</strong>签发的跨域 TGT 被<strong>信任方域</strong>的 KDC 接收后，
+          后者会尝试使用 <strong>trust key</strong> 对该票据解密。若解密成功，整张票据连同其中嵌入的
+          <strong>PAC</strong> 都会被整体接受。因此，这个 PAC 的生成发生在<strong>源域</strong>的
+          <strong>AS 或 TGS 阶段</strong>，而不是在信任方域内重新计算出来。
+        </p>
+<p>
+          一旦跨域 TGT 被接受，就会进入 <strong>TGS 阶段</strong>。这里一个非常关键的细节是：
+          在<strong>跨域 TGS-REP 阶段</strong>，整个过程由<strong>信任方域</strong>的 KDC 独立完成。
+          它使用目标服务账户的密钥加密服务票据（ST），并生成后续在 <strong>AP-REQ</strong> 中使用的
+          <strong>service session key</strong>。
+        </p>
+<pre data-lang="C"><code>// attacker controls trust_key_AB
+
+k_ab = attacker_chosen_key();
+
+fake_interrealm_TGT = Encrypt(
+    key = trust_key_AB,
+    data = {
+        sname = "krbtgt/B",
+        client = "Administrator@A",
+        session_key = k_ab,
+
+        PAC = {
+            UserSID = A\DomainSID + RID(500),
+            ExtraSIDs = [
+                B\DomainSID + RID(512)   // Domain Admin in B
+            ]
+        },
+        times,
+        flags
+    }
+);</code></pre>
+<pre data-lang="C"><code>service_session_key = random_key();
+
+ST_B = Encrypt(
+    key = service_key_B,
+    data = {
+        client = tgt_plain.client,
+        session_key = service_session_key,
+        PAC = tgt_plain.PAC,
+        times,
+        flags
+    }
+);</code></pre>
+<h3 id="silver-ticket">🥈 白银票据（Silver Ticket）</h3>
+<p>
+<strong>Silver Ticket</strong> 与 Golden Ticket 在思路上相近，但区别在于：
+          Silver Ticket 依赖的是<strong>服务账户密钥</strong>，伪造的是 <em>TGS 阶段</em> 的结果，
+          也就是 <strong>TGS-REP / Service Ticket</strong>，同样不需要与 KDC 交互。
+          （参见
+          <a href="#asktgs">TGS phase</a>）
+        </p>
+<p>
+          Silver Ticket 的核心并不是伪造跨域 TGT，而是<strong>直接伪造由目标服务密钥加密的 ST</strong>。
+        </p>
+<pre data-lang="C"><code>// attacker controls service_key_SQL01
+
+service_session_key = random_key();
+
+fake_ST_SQL01 = Encrypt(
+    key = service_key_SQL01,
+    data = {
+        sname = "MSSQLSvc/SQL01.domain.local",
+        client = "Administrator@domain.local",
+        session_key = service_session_key,
+        PAC = {
+            UserSID = domain\DomainSID + RID(500)
+        },
+        times,
+        flags
+    }
+);</code></pre>
+<p>
+          在跨域场景下，若目标访问路径牵涉到域间信任链，语义会更复杂；但 Silver Ticket 的本质仍然是：
+          <strong>伪造最终交给目标服务验证的服务票据</strong>，而不是伪造 inter-realm TGT 本身。
+        </p>
+<h3 id="pac">📜 PAC</h3>
+<p>
+          在 <strong>AS 阶段</strong>，<strong>PAC</strong> 扮演的是<strong>授权来源</strong>（source of authorization）的角色。
+          它在这一阶段并不会被任何具体服务消费；相反，它更像是后续所有服务票据的
+          <strong>授权模板</strong>。
+        </p>
+<p>
+          在 <strong>TGS 阶段</strong>，KDC 解密 TGT 后，会根据具体上下文对 PAC 进行
+          <strong>继承、过滤或扩展</strong>，然后再把该 PAC 嵌入生成出来的服务票据（ST）中。
+          因此，PAC 的语义更接近于<strong>复制并修改</strong>，而不是每次都从零重新计算。
+        </p>
+<p>
+          这意味着：无论 TGT 中携带的 PAC 看起来多么“合法”或“高权限”，只要它没有被传播进最终的 ST，
+          它就<strong>不具备任何直接授权价值</strong>。真正参与访问控制决策的，始终是
+          <strong>服务票据中的 PAC</strong>。
+        </p>
+<blockquote>
+          关于 <code class="inline">PAC_*_CHECKSUM</code> 结构及其校验机制，真实细节要复杂得多，
+          因而此处不展开。
+        </blockquote>
+<pre data-lang="C"><code>// ticket approximate internal structure
+
+TGT / ST
+└── EncTicketPart   (krbtgt / trust key / service key / user key)
+    ├── session_key
+    ├── times
+    ├── flags
+    ├── ...
+    └── authorization-data
+        └── AD-WIN2K-PAC
+            ├── PAC_LOGON_INFO   (SID / Groups / ExtraSIDs)
+            ├── PAC_SERVER_CHECKSUM
+            └── PAC_KDC_CHECKSUM</code></pre>
+<h2 id="delegation">🔗 委派（Delegation）</h2>
+<p>
+  把委派讲清楚，最好的办法不是一上来背属性名，而是先回答一个更底层的问题：
+  <strong>为什么 Kerberos 里会需要 delegation？</strong>
+</p>
+<h3 id="delegation-why">❓ 为什么需要委派</h3>
+<p>
+  先定义一个普通用户 <strong>Alice</strong>。她想访问某个服务，但又不被允许直接接触某些更敏感的下游服务。
+  她可以先登录到服务 <strong>A</strong>，再由 A 去访问 <strong>B</strong>；问题是，
+  <strong>B 并不知道“你是 Alice”</strong>。
+</p>
+<h4>1. Alice 在自己的客户端完成 AS 阶段</h4>
+<pre data-lang="C"><code>Alice@CLIENT → KDC
+AS-REQ
+  - cname = Alice</code></pre>
+<pre data-lang="C"><code>KDC → Alice@CLIENT
+AS-REP
+  - Ticket      = TGT(Alice)
+  - session_key = Kc,tgs</code></pre>
+<p>
+  到这一步，<strong>TGT(Alice)</strong> 只存在于 Alice 自己的客户端上。
+</p>
+<h4>2. Alice 访问服务 A</h4>
+<pre data-lang="C"><code>Alice@CLIENT → KDC
+TGS-REQ
+  - Ticket = TGT(Alice)
+  - sname  = A (HOST/A, HTTP/A, CIFS/A)</code></pre>
+<pre data-lang="C"><code>KDC → Alice@CLIENT
+TGS-REP
+  - Ticket = TGS(Alice → A)</code></pre>
+<pre data-lang="C"><code>Alice@CLIENT → A
+AP-REQ
+  - Ticket = TGS(Alice → A)</code></pre>
+<p>
+  此时，A 能看到的是一张 <strong>服务票据（TGS: Alice → A）</strong>，以及本机上代表 Alice 的本地访问令牌。
+  但 A 并<strong>不持有 Alice 的 TGT</strong>。
+</p>
+<h4>3. A 想代表 Alice 再去访问 B</h4>
+<pre data-lang="C"><code>A → KDC
+TGS-REQ
+  - Ticket = ???   /* Where is the TGT? */
+  - sname  = B</code></pre>
+<p>
+  这就是经典的 <strong>Kerberos double hop</strong> 问题：
+  <strong>第二次 TGS-REQ 在协议层面根本发不出来</strong>。
+  A 手上只有 “Alice → A” 的服务票据，没有 “Alice 的 TGT”，所以它没有能力替 Alice 再向 KDC 申请 “Alice → B” 的票据。
+</p>
+<h3 id="unconstrained-delegation">🪤 非约束委派（Unconstrained Delegation）</h3>
+<p>
+  解决 double hop 的一种方法，是把 A 配成 <strong>非约束委派</strong>。这时，当 Alice 访问 A 时，
+  KDC 会把可继续使用的委派能力一并交给 A，使 A 之后能够代表 Alice 去申请别的服务票据。
+</p>
+<pre data-lang="C"><code>Alice@CLIENT → KDC
+TGS-REQ
+  - Ticket      = TGT(Alice)
+  - sname       = A
+  - forwardable = true</code></pre>
+<pre data-lang="C"><code>KDC → Alice@CLIENT
+TGS-REP
+  - Ticket = TGS(Alice → A)
+  - + delegated TGT / delegated credentials for Alice</code></pre>
+<blockquote>
+  实际实现上，并不是 Alice 自己“把 TGT 交给 A”；更准确地说，是因为 A 被标记为
+  <code class="inline">TRUSTED_FOR_DELEGATION</code>，KDC 允许 A 获得后续继续代表该用户行动所需的委派能力，
+  而 Windows 会把相关票据材料缓存进 A 的 LSASS。
+</blockquote>
+<pre data-lang="C"><code>A → KDC
+TGS-REQ
+  - Ticket = delegated TGT(Alice)
+  - sname  = B</code></pre>
+<pre data-lang="C"><code>KDC → A
+TGS-REP
+  - Ticket = TGS(Alice → B)</code></pre>
+<pre data-lang="C"><code>A → B
+AP-REQ
+  - Ticket = TGS(Alice → B)</code></pre>
+<p>
+  非约束委派的风险也正因此非常高：一旦 A 被攻陷，攻击者拿到的就不再只是“本服务自己的身份”，
+  而是<strong>多个真实用户的可传播委派能力</strong>。
+</p>
+<h3 id="kcd">🔒 Kerberos 约束委派（KCD）</h3>
+<p>
+  约束委派可以理解为<strong>连续发生的两次 TGS 交换</strong>。它仍然解决 double hop，但把范围收紧到明确列出的目标服务。
+</p>
+<pre data-lang="C"><code>User (Alice)
+   |
+   v
+WEB01 (IIS / Web App)
+   |
+   v
+SQL01 (MSSQL)</code></pre>
+<p>你通常会看到类似这样的配置：</p>
+<pre data-lang="C"><code>Account: WEB01$
+Trusted to delegate to:
+  MSSQLSvc/SQL01.domain.local</code></pre>
+<h4>第一段 TGS：S4U2Self</h4>
+<p>
+  在 <strong>S4U2Self</strong> 里，服务 <strong>WEB01</strong> 向 KDC 申请一张
+  “<strong>Alice → WEB01</strong>” 的服务票据。这里的目标服务仍然是 WEB01 自己，
+  它拿到的是一张<strong>承载 Alice 身份语义、但绑定给 WEB01</strong> 的票据。
+</p>
+<pre data-lang="C"><code>TGS_REQ {
+    sname = "HTTP/WEB01.domain.local",
+    impersonated_user = "Alice@domain.local",
+    flags = S4U2Self
+}</code></pre>
+<pre data-lang="C"><code>if (service_account == WEB01 &amp;&amp; user_exists("Alice")) {
+    issue ST_HTTP_WEB01_for_Alice;
+}</code></pre>
+<p>
+  这一步的关键是：<strong>WEB01 仍然没有 Alice 的 TGT，也没有她的长期密钥</strong>。
+  它只是拿到了一张发给自己、并在 PAC 中写入 Alice 授权信息的服务票据。
+</p>
+<h4>第二段 TGS：S4U2Proxy</h4>
+<p>
+  之后，WEB01 再把这张 “Alice → WEB01” 票据作为 evidence ticket，向 KDC 申请一张新的
+  “<strong>Alice → SQL01</strong>” 票据。KDC 会同时检查：
+</p>
+<ul class="clean">
+<li>evidence ticket 是否满足可用条件；</li>
+<li>请求方是否被允许委派到目标 SPN；</li>
+<li>用户与服务端是否存在“不可委派”等限制。</li>
+</ul>
+<pre data-lang="C"><code>TGS_REQ {
+    ticket = ST_HTTP_WEB01_for_Alice,
+    sname  = "MSSQLSvc/SQL01.domain.local"
+}</code></pre>
+<pre data-lang="C"><code>if (ticket.client == "Alice" &amp;&amp;
+    service_account == WEB01 &amp;&amp;
+    WEB01 is allowed to delegate to MSSQLSvc/SQL01) {
+    issue ST_MSSQL_SQL01_for_Alice;
+}</code></pre>
+<p>
+  从 SQL01 的视角看，它只会看到：<strong>Alice 正在拿着一张由 KDC 合法签发的服务票据访问我</strong>。
+  SQL01 不需要知道中间出现过 WEB01。
+</p>
+<p>
+  还要再强调一次：S4U2Self 中“模拟某个用户”并不等于该用户的全部权限自动落地。
+  真正参与访问控制的，始终是<strong>最终发往目标服务的那张 ST 及其 PAC</strong>。
+</p>
+<h3 id="rbcd">🧩 基于资源的约束委派（RBCD）</h3>
+<p>
+<strong>RBCD</strong> 和经典 KCD 的最大差异，不在于有没有 S4U2Self / S4U2Proxy，
+  而在于<strong>授权锚点换了位置</strong>：
+  经典 KCD 把“谁能代理到哪些目标”写在<strong>发起方</strong>，而 RBCD 把“谁可以代表别人访问我”写在<strong>目标资源</strong>。
+</p>
+<pre data-lang="C"><code>TGS_REQ {
+    ticket = ST_HTTP_WEB01_for_Alice,
+    sname  = CIFS/FILE01
+}</code></pre>
+<p>
+  这时，KDC 会查看目标资源 FILE01 的
+  <code class="inline">msDS-AllowedToActOnBehalfOfOtherIdentity</code>，检查其中是否允许 WEB01 代表其他主体来访问 FILE01。
+</p>
+<pre data-lang="C"><code>if (FILE01.msDS-AllowedToActOnBehalfOfOtherIdentity contains WEB01) {
+    issue ST(CIFS/FILE01, client=Alice);
+}</code></pre>
+<p>
+  因此，RBCD 的核心语义不是“发起方被系统全局信任”，而是：
+  <strong>目标资源自己声明，哪些前置服务可以带着别人的身份来找我。</strong>
+</p>
+<h3 id="kcd-without-with-pt">🧪 无 / 有 Protocol Transition 的差异</h3>
+<p>
+  把这套语义放回真实环境里，会看到一个常被混淆的细节：
+  <strong>经典 KCD 在没有 Protocol Transition（PT）时，并不能凭空造出一张可继续代理的用户身份。</strong>
+</p>
+<p>
+  以 HackTheBox 的 <strong>Rebound</strong> 为例，能看到 <code class="inline">delegator$</code>
+  配置了经典的 constrained delegation：(这里以<a href="https://0xdf.gitlab.io/2024/03/30/htb-rebound.html#shell-as-administrator"> 0xdf </a>的文章为例)
+</p>
+<pre data-lang="BASH"><code>oxdf@hacky$ findDelegation.py 'rebound.htb/delegator$' -dc-ip 10.10.11.231 -k -hashes :E1630B0E18242439A50E9D8B5F5B7524
+Impacket v0.12.0.dev1+20240308.164415.4a62f39
+[*] Getting machine hostname
+[-] CCache file is not found. Skipping...
+[-] CCache file is not found. Skipping...
+AccountName   AccountType                     DelegationType  DelegationRightsTo
+---------- ----------------------------------- -------------- --------------------
+delegator$  ms-DS-Group-Managed-Service-Account Constrained   http/dc01.rebound.htb</code></pre>
+<p>
+  随后尝试直接跑 S4U 链：
+</p>
+<pre data-lang="BASH"><code>getST.py -spn http/dc01.rebound.htb -impersonate administrator 'rebound.htb/delegator$' -hashes :E1630B0E18242439A50E9D8B5F5B7524
+# ... omitted
+[-] Kerberos SessionError: KDC_ERR_BADOPTION(KDC cannot accommodate requested option)
+[-] Probably SPN is not allowed to delegate by user delegator$ or initial TGT not forwardable</code></pre>
+<p>
+  失败原因的核心并不是“命令写错了”，而是：
+  在<strong>经典 KCD 且未启用 PT</strong> 的情况下，由 S4U2Self 产出的那张
+  “Administrator → delegator$” 票据，通常只是一个<strong>non-forwardable 的 synthetic service ticket</strong>。
+  这意味着它不足以作为经典 S4U2Proxy 的 evidence ticket 继续向下游传播。
+</p>
+<pre data-lang="TEXT"><code>delegator$ → S4U2Self → KDC
+           ← non-forwardable ST (Administrator → delegator$)</code></pre>
+<blockquote>
+  语义上，这个 <code class="inline">forwardable</code> 位表示的是：
+  这份访问能力是否被允许<strong>跨服务边界继续传播</strong>，而无需重新建立真实用户身份。
+</blockquote>
+<p>
+  但这里还有一个常见误区需要纠正：
+  <strong>“经典 KCD 的 S4U2Proxy 需要 forwardable evidence ticket”</strong> 这条规则，
+  不能直接原样套到 <strong>RBCD</strong> 上。Windows 的 RBCD 实现把委派授权移到了目标资源侧，
+  因而它在实践中的 evidence ticket 约束也更宽；换句话说，
+  <strong>classic KCD 和 RBCD 不是同一套 `forwardable` 语义门槛。</strong>
+</p>
+<p>
+  更稳妥的理解方式是：
+  如果某个实战链条里同时出现了 classic KCD 与 RBCD，那么它往往不是“同一条 KCD 链突然被补齐”，
+  而是<strong>攻击者在 classic KCD 卡住之后，转而利用了由目标资源授权的另一条 RBCD 路径</strong>。
+</p>
+<h4>如果启用了 PT 呢？</h4>
+<p>
+  当 Protocol Transition 启用、且相关委派策略允许时，KDC 才可能在 S4U2Self 阶段发出一张
+  <strong>可继续用于 S4U2Proxy 的 forwardable 服务票据</strong>。这时，下面这条链才真正成立：
+</p>
+<div class="diagram">
+<div class="row">
+<div class="box"><strong>S4U2Self</strong>服务代表用户向 KDC 请求<br/>“User → Service1”</div>
+<div class="arrow">→</div>
+<div class="box"><strong>forwardable evidence</strong>得到可继续传播的服务票据</div>
+<div class="arrow">→</div>
+<div class="box"><strong>S4U2Proxy</strong>再向目标服务申请<br/>“User → Service2”</div>
+</div>
+<div class="caption">当 PT 启用且策略允许时，S4U2Self 产出的票据才具备继续跨服务传播的条件。</div>
+</div>
+<pre data-lang="TEXT"><code>S4U2Self (forwardable) → S4U2Proxy → Administrator → HTTP/dc01</code></pre>
+<p>
+  所以，把话收紧以后，最准确的结论其实很简单：
+  <strong>没有 PT 的经典 KCD，并不能靠 S4U2Self 单独制造出一张可用于经典 S4U2Proxy 的 forwardable 用户票据。</strong>
+</p>
+<h3 id="delegation-faq">❓ FAQ</h3>
+<h4>Kerberos 认证到底指什么？</h4>
+<p>
+  所谓 Kerberos 认证，本质上是：客户端通过 Kerberos 协议向 KDC 证明，自己持有某个主体的长期密钥；
+  KDC 依据这一点签发票据。无论是 <code class="inline">AS-REQ / AS-REP</code>，还是
+  <code class="inline">TGS-REQ / TGS-REP</code>，真正被验证的材料都是 Kerberos 密钥，而安全决策由 KDC 作出。
+</p>
+<h4>为什么 NTLM 不算 Kerberos？</h4>
+<p>
+  因为 NTLM 是一套完全独立的 challenge-response 认证协议。它不需要 KDC，也不会产出 Kerberos 票据；
+  所以 NTLM 本身当然不等于 Kerberos。
+</p>
+<h4>那 Overpass-the-Hash（OPTH）最终拿到的是票据，为什么仍然可以算 Kerberos？</h4>
+<p>
+  因为在 OPTH 里，攻击者虽然可能是借助 NTLM hash 获得了可以派生 Kerberos key 的材料，
+  但真正与 KDC 交互时，走的已经是 <strong>Kerberos 协议</strong>。从 KDC 的视角看，
+  它不关心这把密钥最初是怎么来的；它只关心：
+  <strong>你现在能不能用这把密钥完成 Kerberos 所要求的那套证明。</strong>
+</p>
+<div class="footer">
+          
+        </div></article>
+</main>
+</div>
+</body>
+</html>
