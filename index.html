@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Syllabus</title>
+  <meta name="description" content="Entry" />
+
+  <style>
+    :root {
+      --bg: #0a0c10;
+      --bg-soft: rgba(255, 255, 255, 0.03);
+      --panel: rgba(255, 255, 255, 0.045);
+      --panel-hover: rgba(255, 255, 255, 0.06);
+      --line: rgba(255, 255, 255, 0.08);
+      --line-strong: rgba(255, 255, 255, 0.14);
+      --text: #eef2f7;
+      --muted: #8d97a5;
+      --accent: #8ab4ff;
+      --accent-soft: rgba(138, 180, 255, 0.18);
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.34);
+      --radius: 22px;
+      --max: 820px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background: var(--bg);
+      font-family:
+        "Inter",
+        "PingFang SC",
+        "Hiragino Sans GB",
+        "Microsoft YaHei",
+        "Noto Sans SC",
+        system-ui,
+        -apple-system,
+        sans-serif;
+      line-height: 1.65;
+      letter-spacing: 0.01em;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .ambient,
+    .ambient::before,
+    .ambient::after {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .ambient::before,
+    .ambient::after {
+      content: "";
+      filter: blur(90px);
+      opacity: 0.55;
+      will-change: transform;
+    }
+
+    .ambient::before {
+      width: 34rem;
+      height: 34rem;
+      top: -10rem;
+      left: -12rem;
+      background:
+        radial-gradient(circle at 35% 35%, rgba(138, 180, 255, 0.16), transparent 58%),
+        radial-gradient(circle at 70% 70%, rgba(168, 120, 255, 0.08), transparent 62%);
+      animation: driftA 20s ease-in-out infinite alternate;
+    }
+
+    .ambient::after {
+      width: 30rem;
+      height: 30rem;
+      right: -10rem;
+      bottom: -12rem;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(138, 180, 255, 0.12), transparent 58%),
+        radial-gradient(circle at 35% 35%, rgba(90, 255, 220, 0.06), transparent 65%);
+      animation: driftB 24s ease-in-out infinite alternate;
+    }
+
+    .grid {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.18;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 34px 34px;
+      mask-image: radial-gradient(circle at center, black 42%, transparent 92%);
+    }
+
+    .veil {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(to bottom, rgba(255,255,255,0.015), transparent 20%),
+        radial-gradient(circle at center, transparent 0%, rgba(10,12,16,0.16) 72%, rgba(10,12,16,0.52) 100%);
+    }
+
+    @keyframes driftA {
+      from { transform: translate3d(0, 0, 0) scale(1); }
+      to   { transform: translate3d(4rem, 2rem, 0) scale(1.08); }
+    }
+
+    @keyframes driftB {
+      from { transform: translate3d(0, 0, 0) scale(1); }
+      to   { transform: translate3d(-3rem, -2rem, 0) scale(1.10); }
+    }
+
+    .wrap {
+      width: min(var(--max), calc(100% - 32px));
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    header {
+      padding: 28px 0 8px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+
+    .brand::before {
+      content: "";
+      width: 26px;
+      height: 1px;
+      background: rgba(138, 180, 255, 0.42);
+    }
+
+    main {
+      padding: 70px 0 72px;
+    }
+
+    .hero {
+      margin-bottom: 34px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(3rem, 8vw, 5.6rem);
+      line-height: 0.94;
+      letter-spacing: -0.055em;
+      font-weight: 700;
+    }
+
+    .intro {
+      margin: 18px 0 0;
+      max-width: 42rem;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    .intro strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .section-label {
+      margin: 22px 0 14px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+    }
+
+    .accordion {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .category {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.02));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transition:
+        border-color 0.24s ease,
+        background 0.24s ease,
+        transform 0.24s ease,
+        box-shadow 0.24s ease;
+      position: relative;
+      backdrop-filter: blur(8px);
+    }
+
+    .category::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        110deg,
+        transparent 0%,
+        rgba(138, 180, 255, 0.06) 48%,
+        transparent 100%
+      );
+      transform: translateX(-120%);
+      transition: transform 0.65s ease;
+      pointer-events: none;
+    }
+
+    .category:hover {
+      transform: translateY(-2px);
+      border-color: var(--line-strong);
+      background: linear-gradient(180deg, var(--panel-hover), var(--panel));
+      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.42);
+    }
+
+    .category:hover::before {
+      transform: translateX(120%);
+    }
+
+    .trigger {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      text-align: left;
+      padding: 20px 22px;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 16px;
+      align-items: center;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .trigger:focus-visible {
+      outline: none;
+      box-shadow: inset 0 0 0 1px rgba(138,180,255,0.35);
+    }
+
+    .trigger-left {
+      min-width: 0;
+    }
+
+    .trigger-title {
+      font-size: 1.04rem;
+      font-weight: 650;
+      letter-spacing: -0.015em;
+      color: var(--text);
+    }
+
+    .trigger-desc {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .trigger-meta {
+      color: var(--muted);
+      font-size: 0.84rem;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.07);
+      background: rgba(255,255,255,0.02);
+      white-space: nowrap;
+    }
+
+    .plus {
+      width: 18px;
+      height: 18px;
+      position: relative;
+      flex: 0 0 auto;
+      transition: transform 0.35s ease;
+    }
+
+    .plus::before,
+    .plus::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 14px;
+      height: 1.5px;
+      background: var(--muted);
+      border-radius: 999px;
+      transform: translate(-50%, -50%);
+      transition: transform 0.35s ease, opacity 0.35s ease, background 0.2s ease;
+    }
+
+    .plus::after {
+      transform: translate(-50%, -50%) rotate(90deg);
+    }
+
+    .category:hover .plus::before,
+    .category:hover .plus::after {
+      background: var(--accent);
+    }
+
+    .category.open .plus::before {
+      transform: translate(-50%, -50%) rotate(180deg);
+    }
+
+    .category.open .plus::after {
+      transform: translate(-50%, -50%) rotate(180deg);
+      opacity: 0;
+    }
+
+    /* 展开区域：用 grid 做高度动画 */
+    .panel-wrap {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.5s cubic-bezier(.22,1,.36,1);
+    }
+
+    .category.open .panel-wrap {
+      grid-template-rows: 1fr;
+    }
+
+    .panel {
+      overflow: hidden;
+      border-top: 1px solid transparent;
+      transition: border-color 0.35s ease;
+    }
+
+    .category.open .panel {
+      border-top-color: rgba(255,255,255,0.06);
+    }
+
+    .panel-inner {
+      padding: 10px 12px 12px;
+      position: relative;
+    }
+
+    .panel-inner::before {
+      content: "";
+      position: absolute;
+      left: 18px;
+      top: 14px;
+      bottom: 14px;
+      width: 1px;
+      background: linear-gradient(
+        to bottom,
+        transparent,
+        rgba(138,180,255,0.28),
+        transparent
+      );
+      transform: scaleY(0.35);
+      transform-origin: top;
+      opacity: 0;
+      transition:
+        transform 0.5s cubic-bezier(.22,1,.36,1),
+        opacity 0.4s ease;
+    }
+
+    .category.open .panel-inner::before {
+      transform: scaleY(1);
+      opacity: 1;
+    }
+
+    .item {
+      display: grid;
+      grid-template-columns: 100px 1fr auto;
+      gap: 14px;
+      align-items: center;
+      margin: 6px 0;
+      padding: 14px 14px 14px 26px;
+      border-radius: 16px;
+      color: inherit;
+      position: relative;
+      background: rgba(255,255,255,0.018);
+      border: 1px solid transparent;
+      opacity: 0;
+      transform: translateY(10px);
+      transition:
+        opacity 0.36s ease,
+        transform 0.36s ease,
+        border-color 0.22s ease,
+        background 0.22s ease;
+    }
+
+    .category.open .item {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .item:nth-child(1) { transition-delay: 0.03s; }
+    .item:nth-child(2) { transition-delay: 0.06s; }
+    .item:nth-child(3) { transition-delay: 0.09s; }
+    .item:nth-child(4) { transition-delay: 0.12s; }
+    .item:nth-child(5) { transition-delay: 0.15s; }
+    .item:nth-child(6) { transition-delay: 0.18s; }
+
+    .item::before {
+      content: "";
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(138,180,255,0.5);
+      transform: translateY(-50%);
+      box-shadow: 0 0 12px rgba(138,180,255,0.35);
+    }
+
+    .item::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(138, 180, 255, 0.06),
+        transparent
+      );
+      transform: translateX(-120%);
+      transition: transform 0.55s ease;
+      pointer-events: none;
+      border-radius: inherit;
+    }
+
+    .item:hover {
+      border-color: rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.032);
+    }
+
+    .item:hover::after {
+      transform: translateX(120%);
+    }
+
+    .item-date {
+      color: var(--muted);
+      font-size: 0.88rem;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .item-title {
+      font-size: 0.96rem;
+      font-weight: 580;
+      letter-spacing: -0.01em;
+      min-width: 0;
+    }
+
+    .item-tag {
+      color: var(--muted);
+      font-size: 0.8rem;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.07);
+      background: rgba(255,255,255,0.02);
+      white-space: nowrap;
+    }
+
+    footer {
+      padding: 34px 0 28px;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .footer-line {
+      width: 100%;
+      height: 1px;
+      margin-bottom: 18px;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,0.08),
+        transparent
+      );
+    }
+
+    @media (max-width: 720px) {
+      main {
+        padding-top: 56px;
+      }
+
+      .trigger {
+        grid-template-columns: 1fr auto;
+        align-items: start;
+      }
+
+      .plus {
+        margin-top: 4px;
+      }
+
+      .trigger-meta {
+        grid-column: 1 / 2;
+        justify-self: start;
+      }
+
+      .item {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding-right: 12px;
+      }
+
+      .item-tag {
+        justify-self: start;
+      }
+
+      .trigger-desc {
+        white-space: normal;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient"></div>
+  <div class="grid"></div>
+  <div class="veil"></div>
+
+  <div class="wrap">
+    <header>
+      <div class="brand">SYLLABUS</div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div style="text-align: center; font-size: 52px;">Active Directory Research</div>
+        <p class="intro" style="text-align: center; text-wrap-mode: nowrap; margin-left: 5%;">
+          Research notes on Active Directory internals, authentication semantics and attack graph analysis.
+        </p>
+      </section>
+
+      <div class="section-label">分类</div>
+
+      <section class="accordion" id="accordion">
+        <article class="category open">
+          <button class="trigger" type="button" aria-expanded="true">
+            <div class="trigger-left">
+              <div class="trigger-title">协议与认证</div>
+              <div class="trigger-desc">Kerberos、身份语义、信任边界、认证机制分析</div>
+            </div>
+            <div class="trigger-meta">0 篇</div>
+            <div class="plus" aria-hidden="true"></div>
+          </button>
+
+          <div class="panel-wrap">
+            <div class="panel">
+              <div class="panel-inner">
+                <a class="item" href="/notes/kerberos-delegation.html">
+                  <div class="item-date">2026-03-14</div>
+                  <div class="item-title">Kerberos 语义与身份凭证建立</div>
+                  <div class="item-tag">Kerberos</div>
+                </a>
+
+                <a class="item" href="/notes/ticket-semantics.html">
+                  <div class="item-date">2026-03-05</div>
+                  <div class="item-title">Kerberos 票据模型与跨域信任</div>
+                  <div class="item-tag">认证</div>
+                </a>
+
+                <a class="item" href="/notes/ticket-semantics.html">
+                  <div class="item-date">2026-03-05</div>
+                  <div class="item-title">Kerberos 委派机制和语义</div>
+                  <div class="item-tag">委派</div>
+                </a>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="category">
+          <button class="trigger" type="button" aria-expanded="false">
+            <div class="trigger-left">
+              <div class="trigger-title">Windows / AD 内部机制 （Planned）</div>
+              <div class="trigger-desc">令牌、权限上下文、目录结构、系统行为与内部逻辑</div>
+            </div>
+            <div class="trigger-meta">0 篇</div>
+            <div class="plus" aria-hidden="true"></div>
+          </button>
+
+          <!-- <div class="panel-wrap">
+            <div class="panel">
+              <div class="panel-inner">
+                <a class="item" href="/notes/token-logic.html">
+                  <div class="item-date"></div>
+                  <div class="item-title">令牌语义、身份边界与权限上下文</div>
+                  <div class="item-tag">Windows</div>
+                </a>
+
+                <a class="item" href="/notes/directory-graph.html">
+                  <div class="item-date">2026-02-28</div>
+                  <div class="item-title">目录结构视角下的对象关系图谱</div>
+                  <div class="item-tag">AD</div>
+                </a>
+
+                <a class="item" href="/notes/logon-flow.html">
+                  <div class="item-date">2026-02-19</div>
+                  <div class="item-title">一次登录过程在系统内部到底发生了什么</div>
+                  <div class="item-tag">机制</div>
+                </a>
+              </div>
+            </div>
+          </div> -->
+        </article>
+
+        <article class="category">
+          <button class="trigger" type="button" aria-expanded="false">
+            <div class="trigger-left">
+              <div class="trigger-title">攻击链与横向移动 （Planned）</div>
+              <div class="trigger-desc">信任图、权限继承、横向路径与攻击链抽象</div>
+            </div>
+            <div class="trigger-meta">0 篇</div>
+            <div class="plus" aria-hidden="true"></div>
+          </button>
+
+          <!-- <div class="panel-wrap">
+            <div class="panel">
+              <div class="panel-inner">
+                <a class="item" href="/notes/lateral-movement.html">
+                  <div class="item-date">2026-03-01</div>
+                  <div class="item-title">把横向移动看作一个信任图搜索问题</div>
+                  <div class="item-tag">Red Team</div>
+                </a>
+
+                <a class="item" href="/notes/abuse-surface.html">
+                  <div class="item-date">2026-02-24</div>
+                  <div class="item-title">常见权限关系的滥用面归纳</div>
+                  <div class="item-tag">攻击链</div>
+                </a>
+
+                <a class="item" href="/notes/path-composition.html">
+                  <div class="item-date">2026-02-13</div>
+                  <div class="item-title">多跳路径是如何被组合出来的</div>
+                  <div class="item-tag">路径</div>
+                </a>
+              </div>
+            </div>
+          </div> -->
+        </article>
+
+        <article class="category">
+          <button class="trigger" type="button" aria-expanded="false">
+            <div class="trigger-left">
+              <div class="trigger-title">OPSEC 与规避技术 （Planned）</div>
+              <div class="trigger-desc">行动安全、恶意软件开发、EDR 绕过</div>
+            </div>
+            <div class="trigger-meta">0 篇</div>
+            <div class="plus" aria-hidden="true"></div>
+          </button>
+
+          <!-- <div class="panel-wrap">
+            <div class="panel">
+              <div class="panel-inner">
+                <a class="item" href="/notes/detection-thoughts.html">
+                  <div class="item-date">2026-02-23</div>
+                  <div class="item-title">关于“技巧”和“结构”</div>
+                  <div class="item-tag">Detection</div>
+                </a>
+
+                <a class="item" href="/notes/event-correlation.html">
+                  <div class="item-date">2026-02-15</div>
+                  <div class="item-title">Windows 执行机制和 Loader 的实现</div>
+                  <div class="item-tag">Evasion</div>
+                </a>
+
+                <a class="item" href="/notes/defense-boundary.html">
+                  <div class="item-date">2026-02-08</div>
+                  <div class="item-title">结合各项规避技术的自实现 Beacon </div>
+                  <div class="item-tag">C2</div>
+                </a>
+              </div>
+            </div>
+          </div> -->
+        </article> 
+
+        <article class="category">
+          <button class="trigger" type="button" aria-expanded="false">
+            <div class="trigger-left">
+              <div class="trigger-title">杂项与方法论 （Planned）</div>
+              <div class="trigger-desc">研究过程、结构化表达、抽象建模与问题拆解</div>
+            </div>
+            <div class="trigger-meta">0 篇</div>
+            <div class="plus" aria-hidden="true"></div>
+          </button>
+
+          <!-- <div class="panel-wrap">
+            <div class="panel">
+              <div class="panel-inner">
+                <a class="item" href="/notes/methodology.html">
+                  <div class="item-date">2026-02-21</div>
+                  <div class="item-title">如何把一个问题从现象层剥离到结构层</div>
+                  <div class="item-tag">方法论</div>
+                </a>
+
+                <a class="item" href="/notes/modeling.html">
+                  <div class="item-date">2026-02-11</div>
+                  <div class="item-title">抽象建模不是总结，而是约束条件的提炼</div>
+                  <div class="item-tag">建模</div>
+                </a>
+              </div>
+            </div>
+          </div> -->
+        </article>
+      </section>
+    </main>
+
+    <footer>
+      <div class="footer-line"></div>
+      <div>© 2026 by R3x5. All Rights Reserved</div>
+    </footer>
+  </div>
+
+  <script>
+    const ONE_OPEN = true;
+
+    const categories = [...document.querySelectorAll(".category")];
+
+    function updateCounts() {
+      categories.forEach((category) => {
+        const count = category.querySelectorAll(".item").length;
+        const meta = category.querySelector(".trigger-meta");
+        if (meta) meta.textContent = `${count} 篇`;
+      });
+    }
+
+    function openCategory(category) {
+      if (!category) return;
+      category.classList.add("open");
+      const trigger = category.querySelector(".trigger");
+      if (trigger) trigger.setAttribute("aria-expanded", "true");
+    }
+
+    function closeCategory(category) {
+      if (!category) return;
+      category.classList.remove("open");
+      const trigger = category.querySelector(".trigger");
+      if (trigger) trigger.setAttribute("aria-expanded", "false");
+    }
+
+    categories.forEach((category) => {
+      const trigger = category.querySelector(".trigger");
+      trigger.addEventListener("click", () => {
+        const isOpen = category.classList.contains("open");
+
+        if (ONE_OPEN) {
+          categories.forEach((item) => {
+            if (item !== category) closeCategory(item);
+          });
+        }
+
+        if (isOpen) {
+          closeCategory(category);
+        } else {
+          openCategory(category);
+        }
+      });
+    });
+
+    updateCounts();
+  </script>
+</body>
+</html>
